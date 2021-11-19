@@ -14,6 +14,7 @@ let () =
 
   (* Associated BDD *)
   let bdd = bdd_create ttable;;
+  bdd_luka bdd;;
   bdd_printer bdd;;
   truth_table_printer (bdd_to_truth_table bdd);; (* to find the truth table back *)
   
