@@ -18,4 +18,8 @@ let () =
   bdd_printer bdd;;
   truth_table_printer (bdd_to_truth_table bdd);; (* to find the truth table back *)
   
+  let file = "bdd.dot" in
+    bdd_to_dot bdd ~file;
+    file_display file
+
 ;;

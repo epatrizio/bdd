@@ -50,9 +50,17 @@ module Tools = struct
     List.mapi bool_print_2 ttable
   ;;
 
+  let file_display file_name =
+    let cmd = Format.sprintf "cat %s" file_name in
+      begin try ignore (Sys.command cmd) with _ -> () end;
+
 end;;
 
 module Math = struct
+
+  let increment = fun x -> x + 1;;
+
+  let ref_increment = fun x -> x := !x + 1;;
 
   let is_power_2 elt = Float.is_integer (Float.log2 elt);;
 
