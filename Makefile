@@ -8,3 +8,6 @@ info:
 	@ocamlopt -i bdd.ml
 	@echo "\nmain.ml ----"
 	@ocamlopt -i main.ml
+
+make run:
+	./bdd
