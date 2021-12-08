@@ -38,9 +38,19 @@ let rec bdd_to_truth_table = function
   | Node (bdd1, n, bdd2) -> List.append (bdd_to_truth_table bdd1) (bdd_to_truth_table bdd2)
 ;;
 
-let rec bdd_nb_nodes = function
-  | Leaf (l) -> 1
-  | Node (bdd1, n, bdd2) -> 1 + (bdd_nb_nodes bdd1) + (bdd_nb_nodes bdd2)
+let bdd_nb_nodes b =
+  let cnt_hash = Hashtbl.create 256 in
+  let rec bdd_count_nodes b =
+    match b with
+    | Leaf (l) ->
+        (try Hashtbl.find cnt_hash l.id
+        with Not_found -> Hashtbl.add cnt_hash l.id 0; 1)
+    | Node (bdd1, n, bdd2) ->
+        (try Hashtbl.find cnt_hash n.id
+        with Not_found -> Hashtbl.add cnt_hash n.id 0; 1)
+        + (bdd_count_nodes bdd1) + (bdd_count_nodes bdd2)
+  in
+  bdd_count_nodes b
 ;;
 
 let rec bdd_luka = function
@@ -71,7 +81,7 @@ let bdd_luka_compression b =
           if b1 == b2 then
             b1
           else
-            let n_ = Node (b1, { id = n.id ; tag = n.tag ; luka_word = n.luka_word }, b2) in
+            let n_ = Node (b1, { id = n.id ; tag = n.tag ; luka_word = "" }, b2) in
             Hashtbl.add bdd_hash n.luka_word n_;
             n_
         )
@@ -96,6 +106,7 @@ let rec bdd_printer = function
 
 let bdd_to_dot b ~file =
   let c = open_out file in
+  let cnt_hash = Hashtbl.create 256 in
   let fmt = Format.formatter_of_out_channel c in
     Format.fprintf fmt "digraph bdd {@\n";
     let get_dot_node id label =
@@ -114,11 +125,17 @@ let bdd_to_dot b ~file =
     in
     let rec visit bdd =
       match bdd with
-      | Leaf (l) -> get_dot_node l.id l.luka_word
+      | Leaf (l) ->
+          (try Hashtbl.find cnt_hash l.id
+          with Not_found ->
+            Hashtbl.add cnt_hash l.id (print_string ""); get_dot_node l.id l.luka_word)
       | Node (bdd1, n, bdd2) ->
-          get_dot_node n.id n.tag;
-          get_dot_branch n.id bdd1 0;
-          get_dot_branch n.id bdd2 1;
+          (try Hashtbl.find cnt_hash n.id
+          with Not_found ->
+            Hashtbl.add cnt_hash n.id (print_string "");
+            get_dot_node n.id n.tag;
+            get_dot_branch n.id bdd1 0;
+            get_dot_branch n.id bdd2 1);
           visit bdd1;
           visit bdd2
     in
@@ -126,50 +143,3 @@ let bdd_to_dot b ~file =
     Format.fprintf fmt "}@.";
     close_out c
 ;;
-
-(* 
-
-module LukaNodeMap = Map.Make(String);;
-module LukaLeafMap = Map.Make(String);;
-
-let node_map = LukaNodeMap.empty in
-let leaf_map = LukaLeafMap.empty in
-
-  let rec generate_node_map b node_m =
-    match b with
-    | Leaf (l) -> node_m
-    | Node (bdd1, n, bdd2) ->
-        let node_m = LukaNodeMap.add n.luka_word n node_m in
-        let node_m = generate_node_map bdd1 node_m in
-        let node_m = generate_node_map bdd2 node_m in
-        node_m
-  in
-  let rec generate_leaf_map b leaf_m =
-    match b with
-    | Leaf (l) -> LukaLeafMap.add l.luka_word l leaf_m
-    | Node (bdd1, n, bdd2) ->
-        let leaf_m = generate_leaf_map bdd1 leaf_m in
-        let leaf_m = generate_leaf_map bdd2 leaf_m in
-        leaf_m
-  in
-
-let node_map = generate_node_map b node_map in
-  let leaf_map = generate_leaf_map b leaf_map in
-
-      match bdd1, bdd2 with
-      | Empty, Empty | Empty, _ | _, Empty -> raise (Invalid_argument "Malformed bdd")
-      | Leaf (l1), Leaf (l2) ->
-          let l_1 = LukaLeafMap.find l1.luka_word leaf_map in
-          let l_2 = LukaLeafMap.find l2.luka_word leaf_map in
-          (Node (l_1, n, l_2), node_map, leaf_map)
-      | Leaf (l), _ | _, Leaf (l) -> raise (Invalid_argument "Malformed bdd")
-      | Node (bdd11, n1, bdd12), Node (bdd21, n2, bdd22) ->
-          (*if String.equal n1.luka_word n2.luka_word then (Node (Node (bdd11, n1, bdd12), n, Node (bdd11, n1, bdd12)),m)
-          else (Node (bdd1, n, bdd2),m)*)
-          (*let n_1 = LukaLeafMap.find n1.luka_word node_m in
-          let n_2 = LukaLeafMap.find n2.luka_word node_m in*)
-          let (b1, node_map, leaf_map) = scan bdd1 node_map leaf_map in
-          let (b2, node_map, leaf_map) = scan bdd2 node_map leaf_map in
-          (Node (b1, n, b2), node_map, leaf_map)
-
-*)
