@@ -62,6 +62,14 @@ module Math = struct
 
   let ref_increment = fun x -> x := !x + 1;;
 
+  let rec power nb ex =
+    match ex with
+    | 0 -> 1
+    | n -> nb * power nb (ex-1)
+  ;;
+
+  let power_2 ex = power 2 ex;;
+
   let is_power_2 elt = Float.is_integer (Float.log2 elt);;
 
   let euclidean_division divider dividend =
