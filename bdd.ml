@@ -4,7 +4,6 @@ open Utils.Math;;
 type leaf = {
   id : int;
   decision : bool;
-  mutable luka_word : string;
 }
 type node = {
   id : int;
@@ -25,7 +24,7 @@ let bdd_create ttable =
       ref_increment ref_id;
       let tmp_id = !ref_id in
       match height with
-        | 0 -> Leaf ({ id = tmp_id ; decision = List.hd ttable ; luka_word = "" })
+        | 0 -> Leaf ({ id = tmp_id ; decision = List.hd ttable })
         | h ->
           let tt1,tt2 = split ttable in
           Node (bdd_init (height-1) tt1, { id = tmp_id ; tag = "x"^Int.to_string height ; luka_word = "" }, bdd_init (height-1) tt2)
@@ -53,10 +52,9 @@ let bdd_nb_nodes b =
   bdd_count_nodes b
 ;;
 
+(* String concat complexity ~n² >> Todo, use Buffer module *)
 let rec bdd_luka = function
-  | Leaf (l) ->
-      l.luka_word <- Bool.to_string l.decision;
-      l.luka_word
+  | Leaf (l) -> Bool.to_string l.decision
   | Node (bdd1, n, bdd2) ->
       n.luka_word <- n.tag ^ "(" ^ bdd_luka bdd1 ^ ")(" ^ bdd_luka bdd2 ^ ")";
       n.luka_word
@@ -67,10 +65,10 @@ let bdd_luka_compression b =
   let rec bdd_scan b =
     match b with
     | Leaf (l) ->
-        (try Hashtbl.find bdd_hash l.luka_word
+        (try Hashtbl.find bdd_hash (Bool.to_string l.decision)
         with Not_found ->
-          let l_ = Leaf ({ id = l.id ; decision = l.decision ; luka_word = l.luka_word }) in
-          Hashtbl.add bdd_hash l.luka_word l_;
+          let l_ = Leaf ({ id = l.id ; decision = l.decision }) in
+          Hashtbl.add bdd_hash (Bool.to_string l.decision) l_;
           l_
         )
     | Node (bdd1, n, bdd2) ->
@@ -86,16 +84,12 @@ let bdd_luka_compression b =
             n_
         )
   in
-  let cb = bdd_scan b in
-  print_string "HASH LEN=";
-  print_int (Hashtbl.length bdd_hash);
-  print_newline ();
-  cb
-  (* bdd_scan b *)
+  bdd_luka b;
+  bdd_scan b
 ;;
 
 let rec bdd_printer = function
-  | Leaf (l) -> Format.printf "leaf %d (%B) luka=%s\n" l.id l.decision l.luka_word
+  | Leaf (l) -> Format.printf "leaf %d (%B)\n" l.id l.decision
   | Node (bdd1, n, bdd2) ->
     Format.printf "%d (%s) luka=%s\n" n.id n.tag n.luka_word;
     Format.printf "0/";
@@ -128,7 +122,7 @@ let bdd_to_dot b ~file =
       | Leaf (l) ->
           (try Hashtbl.find cnt_hash l.id
           with Not_found ->
-            Hashtbl.add cnt_hash l.id (print_string ""); get_dot_node l.id l.luka_word)
+            Hashtbl.add cnt_hash l.id (print_string ""); get_dot_node l.id (Bool.to_string l.decision))
       | Node (bdd1, n, bdd2) ->
           (try Hashtbl.find cnt_hash n.id
           with Not_found ->
