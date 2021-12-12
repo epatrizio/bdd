@@ -52,11 +52,34 @@ let bdd_nb_nodes b =
   bdd_count_nodes b
 ;;
 
-(* String concat complexity ~n² >> Todo, use Buffer module *)
+(* Opérator ^ string concat has bad complexity (~n²) *)
+let rec bdd_luka_01 = function
+  | Leaf (l) -> Bool.to_string l.decision
+  | Node (bdd1, n, bdd2) ->
+      n.luka_word <- n.tag ^ "(" ^ bdd_luka_01 bdd1 ^ ")(" ^ bdd_luka_01 bdd2 ^ ")";
+      n.luka_word
+;;
+
+(* String.concat seems better *)
+let rec bdd_luka_02 = function
+  | Leaf (l) -> Bool.to_string l.decision
+  | Node (bdd1, n, bdd2) ->
+      n.luka_word <- String.concat "" [n.tag;"(";bdd_luka_02 bdd1;")(";bdd_luka_02 bdd2;")"];
+      n.luka_word
+;;
+
+(* String.concat seems the most efficient *)
 let rec bdd_luka = function
   | Leaf (l) -> Bool.to_string l.decision
   | Node (bdd1, n, bdd2) ->
-      n.luka_word <- n.tag ^ "(" ^ bdd_luka bdd1 ^ ")(" ^ bdd_luka bdd2 ^ ")";
+      let buffer = Buffer.create 128 in
+      (Buffer.add_string buffer) n.tag;
+      (Buffer.add_string buffer) "(";
+      (Buffer.add_string buffer) (bdd_luka bdd1);
+      (Buffer.add_string buffer) ")(";
+      (Buffer.add_string buffer) (bdd_luka bdd2);
+      (Buffer.add_string buffer) ")";
+      n.luka_word <- Buffer.contents buffer;
       n.luka_word
 ;;
 
@@ -86,6 +109,20 @@ let bdd_luka_compression b =
   in
   bdd_luka b;
   bdd_scan b
+;;
+
+let robdd_benchmark nb_vars =
+  let tt_size = power_2 nb_vars in
+  let bdd_n_nodes = (power_2 (nb_vars+1))-1 in
+  let stat_array = Array.make bdd_n_nodes 0 in
+  for i = 0 to (power_2 (tt_size-1))-1 do (* tt_size-1 (/2) > truth table symmetry form, full combinaisons not necessary *)
+    let ttable = truth_table i tt_size in
+    let bdd = bdd_create ttable in
+    let cbdd = bdd_luka_compression bdd in
+    let nb_nodes = bdd_nb_nodes cbdd in
+    stat_array.(nb_nodes) <- (stat_array.(nb_nodes))+2 (* /2 cf. comment > *2 *)
+  done;
+  stat_array
 ;;
 
 let rec bdd_printer = function
