@@ -23,7 +23,6 @@ let () =
   let ttable_ = truth_table 1234567890000000000 256 in
   let bdd_ = bdd_create ttable_ in
   let cbdd_ = bdd_luka_compression bdd_ in
-    truth_table_printer ttable_;
     truth_table_printer_2 ttable_;
     print_newline ();
     print_int (bdd_nb_nodes bdd_);
@@ -42,7 +41,7 @@ let () =
   let stat_array = robdd_benchmark 4 in
   Format.printf "Execution time: %fs\n" (Sys.time() -. t);
   for i = 0 to (Array.length stat_array)-1 do
-    Format.printf "NB nodes %d >> count %d\n" i stat_array.(i)
+    Format.printf "%d nodes >> count %d\n" i stat_array.(i)
   done
   ;;
 
