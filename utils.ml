@@ -1,4 +1,14 @@
-module Tools = struct
+module Tools :
+  sig
+    val first_elts : 'a list -> int -> 'a list
+    val last_elts : 'a list -> int -> 'a list
+    val split : 'a list -> 'a list * 'a list
+    val generic_completion : 'a -> 'a list -> int -> 'a list
+    val false_completion : bool list -> int -> bool list
+    val truth_table_printer : bool list -> unit
+    val truth_table_printer_2 : bool list -> unit list
+    val file_display : string -> unit
+  end = struct
 
   let rec first_elts list n =
     match list with
