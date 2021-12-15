@@ -19,8 +19,8 @@ let () =
     let file = "cbdd_38.dot" in bdd_to_dot cbdd_38 ~file;
   ;;
 
-  (* Example 2 : bdd from big integer truth table decomposition *)
-  let ttable_ = truth_table 1234567890000000000 256 in
+  (* Example 2 : 1422119206754208377 *)
+  let ttable_ = truth_table 1422119206754208377 64 in
   let bdd_ = bdd_create ttable_ in
   let cbdd_ = bdd_luka_compression bdd_ in
     truth_table_printer_2 ttable_;
@@ -38,7 +38,15 @@ let () =
       - 5 variables > 2^32=4.294.967.296 combinaisons (KO!)
   *)
   let t = Sys.time() in
-  let stat_array = robdd_benchmark 4 in
+  let stat_array = robdd_benchmark_full_distrib 4 in
+  Format.printf "Execution time: %fs\n" (Sys.time() -. t);
+  for i = 0 to (Array.length stat_array)-1 do
+    Format.printf "%d nodes >> count %d\n" i stat_array.(i)
+  done
+  ;;
+
+  let t = Sys.time() in
+  let stat_array = robdd_benchmark_random_distrib 5 in
   Format.printf "Execution time: %fs\n" (Sys.time() -. t);
   for i = 0 to (Array.length stat_array)-1 do
     Format.printf "%d nodes >> count %d\n" i stat_array.(i)

@@ -95,7 +95,7 @@ let bdd_luka_compression b =
           l_
         )
     | Node (bdd1, n, bdd2) ->
-        (try Hashtbl.find bdd_hash n.luka_word;
+        (try Hashtbl.find bdd_hash n.luka_word
         with Not_found ->
           let b1 = bdd_scan bdd1 in
           let b2 = bdd_scan bdd2 in
@@ -111,7 +111,7 @@ let bdd_luka_compression b =
   bdd_scan b
 ;;
 
-let robdd_benchmark nb_vars =
+let robdd_benchmark_full_distrib nb_vars =
   let tt_size = power_2 nb_vars in
   let bdd_n_nodes = (power_2 (nb_vars+1))-1 in
   let stat_array = Array.make bdd_n_nodes 0 in
@@ -121,6 +121,22 @@ let robdd_benchmark nb_vars =
     let cbdd = bdd_luka_compression bdd in
     let nb_nodes = bdd_nb_nodes cbdd in
     stat_array.(nb_nodes) <- (stat_array.(nb_nodes))+2 (* /2 cf. comment > *2 *)
+  done;
+  stat_array
+;;
+
+let robdd_benchmark_random_distrib nb_vars =
+  let tt_size = power_2 nb_vars in
+  let nb_combinaisons = power_2 tt_size in
+  let bdd_n_nodes = (power_2 (nb_vars+1))-1 in
+  let stat_array = Array.make bdd_n_nodes 0 in
+  for i = 0 to 500000 do
+    let n = Int64.to_int(Random.int64 (Int64.of_int nb_combinaisons)) in
+    let ttable = truth_table n tt_size in
+    let bdd = bdd_create ttable in
+    let cbdd = bdd_luka_compression bdd in
+    let nb_nodes = bdd_nb_nodes cbdd in
+    stat_array.(nb_nodes) <- (stat_array.(nb_nodes))+1
   done;
   stat_array
 ;;

@@ -6,6 +6,7 @@ val bdd_create : bool list -> bdd
 val bdd_to_truth_table : bdd -> bool list
 val bdd_nb_nodes : bdd -> int
 val bdd_luka_compression : bdd -> bdd
-val robdd_benchmark : int -> int array
+val robdd_benchmark_full_distrib : int -> int array
+val robdd_benchmark_random_distrib : int -> int array
 val bdd_printer : bdd -> unit
 val bdd_to_dot : bdd -> file:string -> unit
