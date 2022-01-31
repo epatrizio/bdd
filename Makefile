@@ -11,5 +11,8 @@ info:
 	@echo "\nmain.ml ----"
 	@ocamlopt -i main.ml
 
-make run:
+depend:
+	ocamldep options *.mli *.ml > .depend
+
+run:
 	./bdd
