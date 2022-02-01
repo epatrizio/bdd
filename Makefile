@@ -1,5 +1,10 @@
+EXE=bdd
+
 compile:
-	ocamlopt -o bdd utils.ml bdd.mli bdd.ml main.ml
+	ocamlopt -o $(EXE) utils.ml bdd.mli bdd.ml main.ml
+
+clean:
+	rm -rf *.cmo *.cmi *.cmx *.dot *.o $(EXE)
 
 info:
 	@echo "utils.ml ----"
@@ -15,4 +20,4 @@ depend:
 	ocamldep options *.mli *.ml > .depend
 
 run:
-	./bdd
+	./$(EXE)
